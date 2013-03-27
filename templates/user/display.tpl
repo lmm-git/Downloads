@@ -4,8 +4,14 @@
 {insert name="getstatusmsg"}
 {modulelinks type='User'}
 <div id='downloads_item'>
-    <h3><a href="{modurl modname="Downloads" type="user" func="prepHandOut" lid=$item->getLid()}">{img modname='core' set='icons/large' src='download.png' __title='Download' __alt='Download' class='tooltips'}
-    &nbsp;&nbsp;{$item->getTitle()|safetext}</a></h3>
+    <h3>
+        {strip}
+            <a href="{modurl modname="Downloads" type="user" func="prepHandOut" lid=$item->getLid()}">
+                {img modname='core' set='icons/large' src='download.png' __title='Download' __alt='Download' class='tooltips' style='padding-right: 10px;'}
+                {$item->getTitle()|safetext}
+            </a>
+        {/strip}
+    </h3>
 </div>
 <div id='downloads_item_details'>
     <h4>{gt text='Category'}: {getcategoryfullpath cid=$item->getCategory()}</h4>
