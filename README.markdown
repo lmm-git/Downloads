@@ -28,6 +28,7 @@ _UNRELEASED_
     - Improved security stuff for managing files
     - Added downloads-link to the user account board
     - Added user menu bar
+    - Added pagetitle handling
 
 ###Version 3.1.3
 _24 September 2012_
