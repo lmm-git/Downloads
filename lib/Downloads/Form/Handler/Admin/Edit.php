@@ -40,6 +40,12 @@ class Downloads_Form_Handler_Admin_Edit extends Zikula_Form_AbstractHandler
             } else {
                 return LogUtil::registerError($this->__f('File with id %s not found', $id));
             }
+        } else {
+            $this->view->assign('status', true);
+            if(UserUtil::getVar('uid') != 0) {
+                $this->view->assign('submitter', UserUtil::getVar('uname'));
+            }
+            $this->view->assign('version', 1);
         }
         
         if(!SecurityUtil::checkPermission('Downloads::', '::', ACCESS_ADMIN)) {
