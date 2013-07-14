@@ -75,6 +75,28 @@
                 <input disabled="disabled" id="thumbnailheight" type="text" name="thumbnailheight" value="{$modvars.Downloads.thumbnailheight|safetext}" size="40" maxlength="80" />
             </div>
 
+        <div class="z-formrow">
+                <label for="permissionhandling">{gt text='Security handling options'}</label>
+                <select id="permissionhandling" name="permissionhandling" onchange="Downloads_ShowPermissionHandlingNote(this.value)">
+                    <option{if $modvars.Downloads.permissionhandling == '0'} selected="selected"{/if} value="0">{gt text='All categories and downloads are indepedent'}</option>
+                    <option{if $modvars.Downloads.permissionhandling == 10} selected="selected"{/if} value="10">{gt text='All downloads permissions depends on the assigned category (if you have category access, you have download access)'}</option>
+                    <option{if $modvars.Downloads.permissionhandling == 20} selected="selected"{/if} value="20">{gt text='Use the complete category tree to calculate permissions with a positive sheme (higher category once allowed all subcategories are allowed)'}</option>
+                    <option{if $modvars.Downloads.permissionhandling == 21} selected="selected"{/if} value="21">{gt text='Use the complete category tree to calculate permissions with a negative sheme (higher category once disallowed all subcategories are disallowed)'}</option>
+                    <option{if $modvars.Downloads.permissionhandling == 22} selected="selected"{/if} value="22">{gt text='Use the complete category tree to calculate permissions with a dual sheme (allow and disallow in multiple stages)'}</option>
+                </select>
+                <em id="Downloads_PermissionHandlingNote22" class="z-sub z-formnote">{gt text='If you use this option please note the following rules: ACCESS_NONE is the disallow rule for a category, ACCESS_OVERVIEW the neutral rule (access is like the category above) and all above (as example ACCESS_READ) is the allow rule.'}</em>
+            </div>
+            <script type="text/javascript">
+                function Downloads_ShowPermissionHandlingNote(value){
+                    if(value == 22) {
+                        document.getElementById('Downloads_PermissionHandlingNote22').style.display = 'block';
+                    } else {
+                        document.getElementById('Downloads_PermissionHandlingNote22').style.display = 'none';
+                    }
+                }
+                Downloads_ShowPermissionHandlingNote(document.getElementById('permissionhandling').value);
+            </script>
+
         </fieldset>
 
         <fieldset>

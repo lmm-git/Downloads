@@ -48,6 +48,7 @@ class Downloads_Util
             'screenshot_folder' => '',
             'cache_folder' => '',
             'treeview' => false,
+            'permissionhandling' => 0
         );
     }
 

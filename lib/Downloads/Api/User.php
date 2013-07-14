@@ -75,12 +75,27 @@ class Downloads_Api_User extends Zikula_AbstractApi
             } else {
                 $result[$key] = $download;
             }
+            
+            if($this->getVar('permissionhandling') == 0) {
+                if ((!SecurityUtil::checkPermission('Downloads::Item', $download->getLid() . '::', ACCESS_READ)) ||
+                        (!SecurityUtil::checkPermission('Downloads::Category', $download->getCategory()->getCid() . '::', ACCESS_READ))) {
+                    continue;
+                } else {
+                    $result[$key] = $download;
+                }
+            } else {
+                if(!ModUtil::apiFunc($this->name, 'user', 'checkPermissions', array('category' => $download->getCategory()->getCid()))) {
+                    continue;
+                } else {
+                    $result[$key] = $download;
+                }
+            }
         }
         return $result;
     }
 
     /**
-     * cound the number of results in the query
+     * count the number of results in the query
      * @param array $args
      * @return integer
      */
@@ -91,6 +106,100 @@ class Downloads_Api_User extends Zikula_AbstractApi
         return count($items);
     }
 
+    /**
+     * check permissions
+     * @param $args['category']: Actual category
+     * @return boolean
+     */
+    public function checkPermissions($args)
+    {
+        //check if $args['category'] is set
+        if(!is_numeric($args['category'])) {
+            LogUtil::registerError('$args[\'category\'] not set!' . $args['category']);
+            return false;
+        }
+        //get permissionhandling var
+        switch($this->getVar('permissionhandling')) {
+            case '0':
+                LogUtil::registerError('Independend (not category based) securities are not controlled by the checkPermission API!');
+                return false;
+                break;
+            case '10':
+                if($args['category'] == 0) {
+                    return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                } else {
+                    return SecurityUtil::checkPermission('Downloads::Category', $args['category'] . '::', ACCESS_READ);
+                }
+                break;
+            case '20':
+                if($args['selfcall'] != true) {
+                    if($args['category'] == 0) {
+                        return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                    } else {
+                        if(SecurityUtil::checkPermission('Downloads::Category', $args['category'] . '::', ACCESS_READ)){
+                            return true;
+                        }
+                    }
+                }
+                $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
+                if($parentcategory->getCid() == 0) {
+                    return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                } else {
+                    if(SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_READ)){
+                        return true;
+                    }
+                }
+                self::checkPermissions(array('category' => $parentcategory->getCid(), 'selfcall' => true));
+                break;
+            case '21':
+                if($args['selfcall'] != true) {
+                    if($args['category'] == 0) {
+                        return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                    } else {
+                        if(!SecurityUtil::checkPermission('Downloads::Category', $args['category'] . '::', ACCESS_READ)){
+                            return false;
+                        }
+                    }
+                }
+                $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
+                if($parentcategory->getCid() == 0) {
+                    return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                } else {
+                    if(!SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_READ)){
+                        return false;
+                    }
+                }
+                self::checkPermissions(array('category' => $parentcategory->getCid(), 'selfcall' => true));
+                break;
+            case '22':
+                if($args['selfcall'] != true) {
+                    if($args['category'] == 0) {
+                        return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                    } else {
+                        if(!SecurityUtil::checkPermission('Downloads::Category', $args['category'] . '::', ACCESS_OVERVIEW)){
+                            return false;
+                        }
+                        if(SecurityUtil::checkPermission('Downloads::Category', $args['category'] . '::', ACCESS_READ)){
+                            return true;
+                        }
+                    }
+                }
+                $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
+                if($parentcategory->getCid() == 0) {
+                    return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                } else {
+                    if(!SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_OVERVIEW)){
+                        return false;
+                    }
+                    if(SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_READ)){
+                        return true;
+                    }
+                }
+                self::checkPermissions(array('category' => $parentcategory->getCid(), 'selfcall' => true));
+                break;
+        }
+    }
+
     public function getSubCategories($args)
     {
         $category = isset($args['category']) ? $args['category'] : 0;
@@ -98,8 +207,15 @@ class Downloads_Api_User extends Zikula_AbstractApi
         $subcategories = $this->entityManager->getRepository('Downloads_Entity_Categories')->findBy(array('pid' => $category));
 
         foreach ($subcategories as $key => $subcategory) {
-            if (!SecurityUtil::checkPermission('Downloads::Category', $subcategory->getCid() . '::', ACCESS_READ)) {
-                unset($subcategories[$key]);
+            // check module permissions
+            if($this->getVar('permissionhandling') == 0) {
+                if (!SecurityUtil::checkPermission('Downloads::Category', $subcategory->getCid() . '::', ACCESS_OVERVIEW)) {
+                    unset($subcategories[$key]);
+                }
+            } else {
+                if(!ModUtil::apiFunc($this->name, 'user', 'checkPermissions', array('category' => $subcategory->getCid()))) {
+                    unset($subcategories[$key]);
+                }
             }
         }
 

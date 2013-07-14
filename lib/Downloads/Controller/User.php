@@ -11,7 +11,6 @@
  */
 class Downloads_Controller_User extends Zikula_AbstractController
 {
-
     /**
      * main (default) method
      */
@@ -27,8 +26,18 @@ class Downloads_Controller_User extends Zikula_AbstractController
      */
     public function view()
     {
+        // Get parameters from whatever input we need.
+        $startnum = (int)$this->request->query->get('startnum', isset($args['startnum']) ? $args['startnum'] : null);
+        $orderby = $this->request->query->get('orderby', isset($args['orderby']) ? $args['orderby'] : 'title');
+        $original_sdir = $this->request->query->get('sdir', isset($args['sdir']) ? $args['sdir'] : 0);
+        $category = $this->request->query->get('category', isset($args['category']) ? $args['category'] : 0);
+        
         // check module permissions
-        $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
+        if($this->getVar('permissionhandling') == 0) {
+            $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::Category', $category . '::', ACCESS_OVERVIEW), LogUtil::getErrorMsgPermission());
+        } else {
+            $this->throwForbiddenUnless(ModUtil::apiFunc($this->name, 'user', 'checkPermissions', array('category' => $category)), LogUtil::getErrorMsgPermission());
+        }
 
 
         // initialize sort array - used to display sort classes and urls
@@ -37,15 +46,6 @@ class Downloads_Controller_User extends Zikula_AbstractController
         foreach ($fields as $field) {
             $sort['class'][$field] = 'z-order-unsorted'; // default values
         }
-
-        // Get parameters from whatever input we need.
-        $startnum = (int)$this->request->query->get('startnum', isset($args['startnum']) ? $args['startnum'] : null);
-        $orderby = $this->request->query->get('orderby', isset($args['orderby']) ? $args['orderby'] : 'title');
-        $original_sdir = $this->request->query->get('sdir', isset($args['sdir']) ? $args['sdir'] : 0);
-        $category = $this->request->query->get('category', isset($args['category']) ? $args['category'] : 0);
-
-        // check  category permissions
-        $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::Category', "$category::", ACCESS_READ), LogUtil::getErrorMsgPermission());
 
         $this->view->setCacheId('view|cid_' . $category . '|ord_' . $orderby . '_' . $original_sdir . '_stnum_' . $startnum);
 
@@ -102,13 +102,17 @@ class Downloads_Controller_User extends Zikula_AbstractController
      */
     public function display($args)
     {
-        $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
         $lid = isset($args['lid']) ? $args['lid'] : (int)$this->request->query->get('lid', null);
         if (!isset($lid)) {
             throw new Zikula_Exception_Fatal($this->__f('Error! Could not find download for ID #%s.', $lid));
         }
-        $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::Item', $lid . '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
         $item = $this->entityManager->getRepository('Downloads_Entity_Download')->find($lid);
+        // check module permissions
+        if($this->getVar('permissionhandling') == 0) {
+            $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::Item', $lid . '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
+        } else {
+            $this->throwForbiddenUnless(ModUtil::apiFunc($this->name, 'user', 'checkPermissions', array('category' => $item->getCategory()->getCid())), LogUtil::getErrorMsgPermission());
+        }
         $item->setFilesize(round((int)$item->getFilesize() / 1024, 2));
         //$item['filetype'] = FileUtil::getExtension($item['filename']);
         $filename = $item->getFilename();
@@ -129,9 +133,17 @@ class Downloads_Controller_User extends Zikula_AbstractController
      */
     public function prepHandOut($args)
     {
-        $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
-
         $lid = (int)$this->request->query->get('lid', null);
+        if (!isset($lid)) {
+            throw new Zikula_Exception_Fatal($this->__f('Error! Could not find download for ID #%s.', $lid));
+        }
+        $item = $this->entityManager->getRepository('Downloads_Entity_Download')->find($lid);
+        // check module permissions
+        if($this->getVar('permissionhandling') == 0) {
+            $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::Item', $lid . '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
+        } else {
+            $this->throwForbiddenUnless(ModUtil::apiFunc($this->name, 'user', 'checkPermissions', array('category' => $item->getCategory()->getCid())), LogUtil::getErrorMsgPermission());
+        }
 
         // if admin limits session downloads, enforce
         if ($this->getVar('sessionlimit')) {
@@ -144,10 +156,11 @@ class Downloads_Controller_User extends Zikula_AbstractController
                 SessionUtil::setVar('dlcount', $dlcount);
             }
 
-            // if limit not reached, download, else redirect
+            // if limit not reached, download, else redirect and throw out error message
             if ($dlcount < $this->getVar('sessiondownloadlimit')) {
                 $this->handoutFile(array('lid' => $lid));
             } else {
+                LogUtil::registerError($this->__('Session download limit reached! Please try again later.'));
                 $this->redirect(ModUtil::url('Downloads', 'user', 'main'));
             }
         } else {
@@ -165,13 +178,18 @@ class Downloads_Controller_User extends Zikula_AbstractController
      */
     public function handoutFile($args)
     {
-        $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
-
         if (!isset($args['lid']) || !is_numeric($args['lid'])) {
             return LogUtil::registerArgsError(ModUtil::url('Downloads', 'user', 'main'));
         }
 
         $myfile = $this->entityManager->getRepository('Downloads_Entity_Download')->find($args['lid']);
+
+        // check module permissions
+        if($this->getVar('permissionhandling') == 0) {
+            $this->throwForbiddenUnless(SecurityUtil::checkPermission('Downloads::Item', $args['lid'] . '::', ACCESS_READ), LogUtil::getErrorMsgPermission());
+        } else {
+            $this->throwForbiddenUnless(ModUtil::apiFunc($this->name, 'user', 'checkPermissions', array('category' => $myfile->getCategory()->getCid())), LogUtil::getErrorMsgPermission());
+        }
 
         if (stristr($myfile->getUrl(), 'http:') || stristr($myfile->getUrl(), 'ftp:') || stristr($myfile->getUrl(), 'https:')) {
             // increment hit count
@@ -184,7 +202,7 @@ class Downloads_Controller_User extends Zikula_AbstractController
             $fileinfo = pathinfo($myfile->getUrl());
             $filename = $fileinfo['basename'];
 
-            // check for existance						
+            // check for existance
             $filepointer = is_file($myfile->getUrl());
 
             // last file type check

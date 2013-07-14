@@ -27,7 +27,11 @@ function smarty_function_getcategoryfullpath($params, Zikula_View $view)
     foreach ($categoryPath as $path) {
         $fullpath .= "<a href ='" . ModUtil::url('Downloads', 'user', 'view', array('category' => $path['cid'])) . "'>$path[title]</a> / ";
     }
-    return $fullpath;
+    if(isset($params['assign'])) {
+        $view->assign($params['assign'], $fullpath);
+    } else {
+        return $fullpath;
+    }
 }
 
 function getParentName($em, $cid) {
