@@ -36,5 +36,10 @@ class Downloads_Version extends Zikula_AbstractVersion
         $bundle = new Zikula_HookManager_SubscriberBundle($this->name, 'subscriber.downloads.ui_hooks.downloads', 'ui_hooks', $this->__('Downloads Hooks'));
         $bundle->addEvent('display_view', 'downloads.ui_hooks.downloads.display_view');
         $this->registerHookSubscriberBundle($bundle);
+        
+        $bundle = new Zikula_HookManager_SubscriberBundle($this->name, 'subscriber.downloads.filter_hooks.users_extrahead', 'filter_hooks', $this->__('Users extrahead'));
+        $bundle->addEvent('filter', 'downloads.filter_hooks.users_extrahead');
+        $this->registerHookSubscriberBundle($bundle);
+        
     }
 }
