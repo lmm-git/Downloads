@@ -6,6 +6,7 @@
 </div>
 
 {form cssClass="z-form" enctype="multipart/form-data"}
+{formsetinitialfocus inputId='title'}
     <fieldset>
         <legend>{if isset($lid)}{gt text="Edit Download"}{else}{gt text="New Download"}{/if}</legend>
 

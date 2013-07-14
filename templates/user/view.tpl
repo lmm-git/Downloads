@@ -1,9 +1,6 @@
-{ajaxheader modname='Downloads' ui=true}
-<h2>{gt text='Download Items'}</h2>
-<h3>{gt text='Category'}: / {getcategoryfullpath cid=$cid}</h3>
-
-{insert name="getstatusmsg"}
-{modulelinks type='User'}
+{gt text='Category' assign='subtitle'}
+{getcategoryfullpath cid=$cid assign='categoryfullpath'}
+{include file='user/includes/head.tpl' __title='View downloads' subtitle="`$subtitle`: `$categoryfullpath`"}
 <table class="z-datatable">
     <tbody>
         {if ($cid <> 0)}
@@ -57,7 +54,7 @@
             </td>
         </tr>
         {foreachelse}
-        <tr class='z-datatableempty'><td colspan='6' class='z-center'>{gt text='No records in category "%1$s". Try a sub-category, or a different category.' tag1=$cid|getcategorynamefromid|safetext}</td></tr>
+        <tr class='z-datatableempty'><td colspan='7' class='z-center'>{gt text='No records in category "%1$s". Try a sub-category, or a different category.' tag1=$cid|getcategorynamefromid|safetext}</td></tr>
         {/foreach}
     </tbody>
 </table>
