@@ -138,6 +138,7 @@ CHANGE `pn_description` `description` VARCHAR( 254 ) CHARACTER SET utf8 COLLATE 
                 $stmt->execute();
 
                 HookUtil::registerSubscriberBundles($this->version->getHookSubscriberBundles());
+                $hookswritten = true;
 
             case '3.0.0':
                 // no changes
@@ -152,10 +153,12 @@ CHANGE `pn_description` `description` VARCHAR( 254 ) CHARACTER SET utf8 COLLATE 
                 //set permissionhandling var introduced in 3.1.4
                 $defaultvars = Downloads_Util::getModuleDefaults();
                 $this->setVar('permissionhandling', $defaultvars['permissionhandling']);
-                //reread hooks because new hook added
-                $newHooks = $this->version->getHookSubscriberBundles();
-                unset($newHooks['subscriber.downloads.ui_hooks.downloads']);
-                HookUtil::registerSubscriberBundles($newHooks);
+                //reread hooks because new hook added if not written in update from version 2.4.0
+                if($hookswritten != true) {
+                    $newHooks = $this->version->getHookSubscriberBundles();
+                    unset($newHooks['subscriber.downloads.ui_hooks.downloads']);
+                    HookUtil::registerSubscriberBundles($newHooks);
+                }
                 
                 //future development
         }
