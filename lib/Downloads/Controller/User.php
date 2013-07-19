@@ -200,7 +200,7 @@ class Downloads_Controller_User extends Zikula_AbstractController
         } else {
             // file is local
             $fileinfo = pathinfo($myfile->getUrl());
-            $filename = $fileinfo['basename'];
+            $filename = $myfile->getFilename();
 
             // check for existance
             $filepointer = is_file($myfile->getUrl());

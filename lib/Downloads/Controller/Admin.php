@@ -134,7 +134,8 @@ class Downloads_Controller_Admin extends Zikula_AbstractController
             'screenshot_folder' => $this->request->request->get('screenshot_folder', $defaults['screenshot_folder']),
             'cache_folder' => $this->request->request->get('cache_folder', $defaults['cache_folder']),
             'treeview' => $this->request->request->get('treeview', $defaults['treeview']),
-            'permissionhandling' => $this->request->request->get('permissionhandling', $defaults['permissionhandling'])
+            'permissionhandling' => $this->request->request->get('permissionhandling', $defaults['permissionhandling']),
+            'upload_filename' => $this->request->request->get('upload_filename', $defaults['upload_filename'])
         );
 
 

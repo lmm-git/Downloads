@@ -48,7 +48,8 @@ class Downloads_Util
             'screenshot_folder' => '',
             'cache_folder' => '',
             'treeview' => false,
-            'permissionhandling' => 0
+            'permissionhandling' => 0,
+            'upload_filename' => '%origname%'
         );
     }
 
@@ -576,7 +577,7 @@ class Downloads_Util
 
     /**
      * @param       $cid
-     * @return      string		
+     * @return      string
      */
     public static function getCatNavPath($args)
     {
@@ -665,7 +666,7 @@ class Downloads_Util
     /**
      * format title string to show category array structure
      * @param array
-     * @return string		
+     * @return string
      */
     public static function getCatNavPathArray($args)
     {
@@ -735,7 +736,7 @@ class Downloads_Util
             $uploadfile = $_FILES[$key]['tmp_name'];
             $origfile   = $_FILES[$key]['name'];
 
-            if ($newName) {
+            if ($newName != '') {
                 $uploaddest = "$destination/$newName";
             } else {
                 $uploaddest = "$destination/$origfile";
@@ -755,6 +756,38 @@ class Downloads_Util
         }
 
         return $msg;
+    }
+
+    public static function removeCategory($categoryId) {
+        $em = ServiceUtil::getService('doctrine.entitymanager');
+        $dom = ZLanguage::getModuleDomain('Downloads');
+        $cat = $em->getRepository('Downloads_Entity_Categories')->find($categoryId);
+        try {
+            $em->remove($cat);
+            LogUtil::registerStatus(__f('Category [id# %s] deleted!', $categoryId, $dom));
+        } catch (Exception $e) {
+            return LogUtil::registerError($e->getMessage());
+        }
+        //remove tree-like
+        //files in this category
+        $downloadItems = $em->getRepository('Downloads_Entity_Download')->findBy(array('category' => $categoryId));
+        foreach($downloadItems as $file) {
+            $oldname = $file->getUrl();
+            $fullpath = DataUtil::formatForOS($oldname);
+            @unlink($fullpath);
+            LogUtil::registerStatus(__f('File [id# %s] deleted!', $file->getLid(), $dom));
+            $em->remove($file);
+            ModUtil::apiFunc('Downloads', 'user', 'clearItemCache', $file);
+        }
+        //categories in this category
+        $categoryItems = $em->getRepository('Downloads_Entity_Categories')->findBy(array('pid' => $categoryId));
+        foreach($categoryItems as $categoryItem) {
+            if(!self::removeCategory($categoryItem['cid'])) {
+                return false;
+            }
+        }
+        $em->flush();
+        return true;
     }
 
 }

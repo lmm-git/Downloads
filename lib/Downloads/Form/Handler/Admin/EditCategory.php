@@ -42,11 +42,11 @@ class Downloads_Form_Handler_Admin_EditCategory extends Zikula_Form_AbstractHand
         }
 
         if (!$view->getStateData('returnurl')) {
-			$editurl = ModUtil::url('Downloads', 'user', 'editCategory');
+            $editurl = ModUtil::url('Downloads', 'user', 'editCategory');
             $returnurl = System::serverGetVar('HTTP_REFERER');
             if (strpos($returnurl, $editurl) === 0) {
                 $returnurl = ModUtil::url('Downloads', 'admin', 'categoryList');
-			}
+            }
             $view->setStateData('returnurl', $returnurl);
         }
         $this->view->assign('categories', Downloads_Util::getCatSelectArray(array('includeroot' => true)));
@@ -72,15 +72,10 @@ class Downloads_Form_Handler_Admin_EditCategory extends Zikula_Form_AbstractHand
         }
 
         if ($args['commandName'] == 'delete') {
-            $cat = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($this->id);
-            try {
-                $this->entityManager->remove($cat);
-                $this->entityManager->flush();
-                LogUtil::registerStatus($this->__f('Category [id# %s] deleted!', $this->id));
-            } catch (Exception $e) {
-                return LogUtil::registerError($e->getMessage());
+            if(!Downloads_Util::removeCategory($this->id)) {
+                return LogUtil::registerError();
             }
-            return $view->redirect($returnurl);            
+            return $view->redirect($returnurl);
         }
 
         // check for valid form

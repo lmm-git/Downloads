@@ -58,7 +58,7 @@
         {/foreach}
     </tbody>
 </table>
-{pager rowcount=$rowcount limit=$modvars.Downloads.perpage posvar='startnum'}
+{pager rowcount=$rowcount limit=$modvars.Downloads.perpage posvar='startnum' maxpages=20}
 {adminfooter}
 <script type="text/javascript">
 // <![CDATA[

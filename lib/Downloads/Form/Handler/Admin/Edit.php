@@ -81,8 +81,8 @@ class Downloads_Form_Handler_Admin_Edit extends Zikula_Form_AbstractHandler
         if ($args['commandName'] == 'delete') {
             if(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_DELETE)) {
                 $file = $this->entityManager->getRepository('Downloads_Entity_Download')->find($this->id);
-                $oldname = $file->getFilename();
-                $fullpath = DataUtil::formatForOS("$storage/$oldname");
+                $oldname = $file->getUrl();
+                $fullpath = DataUtil::formatForOS($oldname);
                 @unlink($fullpath);
                 $this->entityManager->remove($file);
                 $this->entityManager->flush();
@@ -120,7 +120,46 @@ class Downloads_Form_Handler_Admin_Edit extends Zikula_Form_AbstractHandler
 
         if ((is_array($data['filename'])) && ($data['filename']['size'] > 0)) {
             $data['filesize'] = $data['filename']['size'];
-            $result = Downloads_Util::uploadFile('filename', $storage, $data['filename']['name']);
+            $filename = $this->getVar('upload_filename');
+            $filename_array = explode('%', $filename);
+            $filename = '';
+            foreach($filename_array as $key => $item) {
+                if($key%2 == 0) {
+                    $filename .= $item;
+                } else {
+                    $item_array = explode(':', $item);
+                    switch($item_array[0]) {
+                        case 'title':
+                            $filename .= $data['title'];
+                            break;
+                        case 'fileextension':
+                            $finfo = finfo_open();
+                            if(!$finfo) {
+                                return LogUtil::registerError($this->__('Opening fileinfo database failed. Please check your server configuration!'));
+                            }
+                            $fileType = finfo_file($finfo, $data['filename']['tmp_name'], FILEINFO_MIME_TYPE);
+                            $fileTypeArray = explode('/', $fileType);
+                            $filename .= $fileTypeArray[1];
+                            break;
+                        case 'origname':
+                            $filename .= $data['filename']['name'];
+                            break;
+                        case 'hash':
+                            $filename .= hash_file('md5', $data['filename']['tmp_name']);
+                            break;
+                        case 'uservar':
+                            $filename .= UserUtil::getVar($item_array[1]);
+                            break;
+                        case 'time':
+                            $filename .= date($item_array[1]);
+                            break;
+                        default:
+                            return LogUtil::registerError($this->__('Unknown tag found! Please check your module configuration at the upload filename.'));
+                    }
+                }
+            }
+            
+            $result = Downloads_Util::uploadFile('filename', $storage, $filename);
             if (!$result) {
                 return LogUtil::registerError($result);
             }
@@ -128,7 +167,7 @@ class Downloads_Form_Handler_Admin_Edit extends Zikula_Form_AbstractHandler
             $name = $data['filename']['name'];
             unset($data['filename']);
             $data['filename'] = $name;
-            $data['url'] = "$storage/$name";
+            $data['url'] = "$storage/$filename";
         } else if (((is_array($data['filename'])) && (!$data['filename']['size'] > 0)) || (!isset($data['filename']))) {
             $data['filename'] = '';
         }
@@ -138,9 +177,9 @@ class Downloads_Form_Handler_Admin_Edit extends Zikula_Form_AbstractHandler
             if(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_EDIT)) {
                 $file = $this->entityManager->getRepository('Downloads_Entity_Download')->find($this->id);
                 // if file is new, delete old one
-                $oldname = $file->getFilename();
+                $oldname = $file->getUrl();
                 if ($newFileUploadedFlag) {
-                    $fullpath = "$storage/$oldname";
+                    $fullpath = DataUtil::formatForOS($oldname);
                     @unlink($fullpath);
                 } else {
                     $data['filename'] = $file->getFilename();

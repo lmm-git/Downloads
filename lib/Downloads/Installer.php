@@ -92,7 +92,7 @@ class Downloads_Installer extends Zikula_AbstractInstaller
                 $sqlStatements = array();
                 // N.B. statements generated with PHPMyAdmin
                 $sqlStatements[] = 'RENAME TABLE ' . $prefix . '_downloads_downloads' . " TO downloads_downloads";
-                // note: because 'update' and 'date' are reserved SQL words, the fields are renamd to uupdate and ddate, respectively
+                // note: because 'update' and 'date' are reserved SQL words, the fields are renamed to uupdate and ddate, respectively
                 $sqlStatements[] = "ALTER TABLE `downloads_downloads` 
 CHANGE `pn_lid` `lid` INT(11) NOT NULL AUTO_INCREMENT, 
 CHANGE `pn_cid` `cid` INT(11) NOT NULL DEFAULT '0', 
@@ -153,13 +153,54 @@ CHANGE `pn_description` `description` VARCHAR( 254 ) CHARACTER SET utf8 COLLATE 
                 //set permissionhandling var introduced in 3.1.4
                 $defaultvars = Downloads_Util::getModuleDefaults();
                 $this->setVar('permissionhandling', $defaultvars['permissionhandling']);
+                //set filename var introduced in 3.1.4
+                $this->setVar('upload_filename', $defaultvars['upload_filename']);
                 //reread hooks because new hook added if not written in update from version 2.4.0
                 if($hookswritten != true) {
                     $newHooks = $this->version->getHookSubscriberBundles();
                     unset($newHooks['subscriber.downloads.ui_hooks.downloads']);
-                    HookUtil::registerSubscriberBundles($newHooks);
+                #    HookUtil::registerSubscriberBundles($newHooks);
                 }
-                
+                //add some useful indexes
+                $sqlStatements = array();
+                $sqlStatements[] = 'ALTER TABLE `downloads_downloads` ADD INDEX ( `cid` ;)';
+                $sqlStatements[] = 'ALTER TABLE `downloads_categories` ADD INDEX ( `pid` ) ;';
+                $connection = $this->entityManager->getConnection();
+                foreach ($sqlStatements as $sql) {
+                    $stmt = $connection->prepare($sql);
+                    try {
+                        $stmt->execute();
+                    } catch (Exception $e) {
+                        
+                    }
+                }
+                //clean up database (because in some cases there are update problems from version 2.4.0)
+                $categories = $this->entityManager->getRepository('Downloads_Entity_Categories')->findBy(array());
+                foreach($categories as $item) {
+                    if($item['pid'] != 0 && is_object($this->entityManager->getRepository('Downloads_Entity_Categories')->find($item['cid']))) {
+                        self::checkCategoryHealth($item);
+                    }
+                }
+                /*$downloads = $this->entityManager->getRepository('Downloads_Entity_Download')->findBy(array());
+                #print_r($downloads);
+                foreach($downloads as $item) {
+                    try {
+                        $item->getCid();
+                    } catch (Exception $e) {
+                        print_r($e);
+                        echo $item->getLid() . ' removed!' . "\n";
+                    }
+                    if(!is_object($item->getCid())) {
+                        echo $item->getLid() . ' removed!' . "\n";
+                        #$this->entityManager->remove($item);
+                        #$this->entityManager->flush();
+                    } else {
+                        echo $item->getLid() . ' not removed!' . "\n";
+                    }
+                }
+                System::shutdown();
+                return false;*/
+            case '3.1.4':
                 //future development
         }
 
@@ -311,6 +352,21 @@ CHANGE `pn_description` `description` VARCHAR( 254 ) CHARACTER SET utf8 COLLATE 
         }
         // clean up leftovers
         $this->entityManager->flush();
+    }
+
+    private function checkCategoryHealth($category) {
+        echo "Check category $category[cid]\n";
+        $parentCategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($category['pid']);
+        if(is_object($parentCategory)) {
+            if($parentCategory['pid'] != 0 && $parentCategory['pid'] != $parentCategory['cid']) {
+                self::checkCategoryHealth($parentCategory);
+            } elseif($parentCategory['pid'] == $parentCategory['cid']) {
+                Downloads_Util::removeCategory($category['cid']);
+            }
+        } else {
+            Downloads_Util::removeCategory($category['cid']);
+        }
+        return;
     }
 
 }

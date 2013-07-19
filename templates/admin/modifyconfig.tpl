@@ -153,6 +153,12 @@
             </div>
 
             <div class="z-formrow">
+                <label for="upload_filename">{gt text='Upload folder path'}</label>
+                <input id="upload_filename" type="text" name="upload_filename" value="{$modvars.Downloads.upload_filename|safetext}" size="40" maxlength="80" />
+                <em class="z-sub z-formnote">{gt text='Possible variables are %title% (title of the download), %fileextension%, %origname% (name as the file was uploaded), %uservar:<b>requested var like "uid" (same as UserUtil::getVar(var))</b>%, %time:<b>Time sytax from the date() function, see <a href="http://php.net/manual/en/function.date.php">here</a></b>% and %hash% (simple md5 file hash)'}</em>
+            </div>
+
+            <div class="z-formrow">
                 <label for="screenshot_folder">{gt text='Screenshot folder path'}</label>
                 <input disabled="disabled" id="screenshot_folder" type="text" name="screenshot_folder" value="{$modvars.Downloads.screenshot_folder|safetext}" size="40" maxlength="80" />
             </div>

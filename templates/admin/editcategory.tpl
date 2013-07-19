@@ -31,7 +31,7 @@
     <div class="z-buttons z-formbuttons">
         {formbutton class='z-bt-ok' commandName='create' __text='Save'}
         {formbutton class='z-bt-cancel' commandName='cancel' __text='Cancel'}
-        {if isset($cid)}{formbutton class="z-bt-delete z-btred" commandName="delete" __text="Delete" __confirmMessage='Delete'}{/if}
+        {if isset($cid)}{formbutton class="z-bt-delete z-btred" commandName="delete" __text="Delete" __confirmMessage='Delete this category with all subcategories and files?'}{/if}
     </div>
 {/form}
 {adminfooter}
