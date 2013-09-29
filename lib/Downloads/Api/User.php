@@ -69,13 +69,12 @@ class Downloads_Api_User extends Zikula_AbstractApi
 
         $result = array();
         foreach ($downloads as $key => $download) {
-            if ((!SecurityUtil::checkPermission('Downloads::Item', $download->getLid() . '::', ACCESS_READ)) ||
-                    (!SecurityUtil::checkPermission('Downloads::Category', $download->getCategory()->getCid() . '::', ACCESS_READ))) {
+            if (((!SecurityUtil::checkPermission('Downloads::Item', $download->getLid() . '::', ACCESS_READ)) ||
+                    (!SecurityUtil::checkPermission('Downloads::Category', $download->getCategory()->getCid() . '::', ACCESS_READ))) && $this->getVar('permissionhandling') == 0 ) {
                 continue;
             } else {
                 $result[$key] = $download;
             }
-            
             if($this->getVar('permissionhandling') == 0) {
                 if ((!SecurityUtil::checkPermission('Downloads::Item', $download->getLid() . '::', ACCESS_READ)) ||
                         (!SecurityUtil::checkPermission('Downloads::Category', $download->getCategory()->getCid() . '::', ACCESS_READ))) {
@@ -174,7 +173,7 @@ class Downloads_Api_User extends Zikula_AbstractApi
             case '22':
                 if($args['selfcall'] != true) {
                     if($args['category'] == 0) {
-                        return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
+                        return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_OVERVIEW);
                     } else {
                         if(!SecurityUtil::checkPermission('Downloads::Category', $args['category'] . '::', ACCESS_OVERVIEW)){
                             return false;
@@ -184,10 +183,11 @@ class Downloads_Api_User extends Zikula_AbstractApi
                         }
                     }
                 }
-                $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
-                if($parentcategory->getCid() == 0) {
+                $category = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
+                if($category->getPid() == 0) {
                     return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
                 } else {
+                    $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->findOneBy(array('cid' => $category['pid']));
                     if(!SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_OVERVIEW)){
                         return false;
                     }
