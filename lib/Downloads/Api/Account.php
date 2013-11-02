@@ -21,7 +21,7 @@ class Downloads_Api_Account extends Zikula_AbstractApi
 	{
 		$items = array();
 
-		if(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_ADD))
+		if(SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ))
 		{
 			$items[] = array(
 				'url'   => ModUtil::url($this->name, 'user', 'view'),
