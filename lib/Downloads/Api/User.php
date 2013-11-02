@@ -28,8 +28,13 @@ class Downloads_Api_User extends Zikula_AbstractApi
         $links = array ();
 
         if (SecurityUtil::checkPermission('Downloads::', '::', ACCESS_ADD)) {
+            if(FormUtil::getPassedValue('category', null, 'GET') != null) {
+                $url = ModUtil::url('Downloads', 'admin', 'edit', array('category' => FormUtil::getPassedValue('category', null, 'GET')));
+            } else {
+                $url = ModUtil::url('Downloads', 'admin', 'edit');
+            }
             $links[] = array(
-                'url' => ModUtil::url('Downloads', 'admin', 'edit'),
+                'url' => $url,
                 'text' => $this->__('New download'),
                 'class' => 'z-icon-es-new');
         }

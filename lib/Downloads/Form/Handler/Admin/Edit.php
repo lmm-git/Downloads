@@ -45,6 +45,7 @@ class Downloads_Form_Handler_Admin_Edit extends Zikula_Form_AbstractHandler
             if(UserUtil::getVar('uid') != 0) {
                 $this->view->assign('submitter', UserUtil::getVar('uname'));
             }
+            $this->view->assign('category', FormUtil::getPassedValue('category', null, 'GET'));
             $this->view->assign('version', 1);
         }
         
