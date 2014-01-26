@@ -159,7 +159,7 @@ CHANGE `pn_description` `description` VARCHAR( 254 ) CHARACTER SET utf8 COLLATE 
                 if($hookswritten != true) {
                     $newHooks = $this->version->getHookSubscriberBundles();
                     unset($newHooks['subscriber.downloads.ui_hooks.downloads']);
-                    HookUtil::registerSubscriberBundles($newHooks);
+                   # HookUtil::registerSubscriberBundles($newHooks);
                 }
                 //add some useful indexes
                 $sqlStatements = array();
@@ -181,6 +181,25 @@ CHANGE `pn_description` `description` VARCHAR( 254 ) CHARACTER SET utf8 COLLATE 
                         self::checkCategoryHealth($item);
                     }
                 }
+                /*$downloads = $this->entityManager->getRepository('Downloads_Entity_Download')->findBy(array());
+                #print_r($downloads);
+                foreach($downloads as $item) {
+                    try {
+                        $item->getCid();
+                    } catch (Exception $e) {
+                        print_r($e);
+                        echo $item->getLid() . ' removed!' . "\n";
+                    }
+                    if(!is_object($item->getCid())) {
+                        echo $item->getLid() . ' removed!' . "\n";
+                        #$this->entityManager->remove($item);
+                        #$this->entityManager->flush();
+                    } else {
+                        echo $item->getLid() . ' not removed!' . "\n";
+                    }
+                }
+                System::shutdown();
+                return false;*/
             case '3.1.4':
                 //future development
         }
