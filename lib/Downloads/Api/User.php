@@ -122,6 +122,13 @@ class Downloads_Api_User extends Zikula_AbstractApi
             LogUtil::registerError('$args[\'category\'] not set!' . $args['category']);
             return false;
         }
+        //check if $args['category'] is valid
+        $category = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
+        if(!($category instanceof Downloads_Entity_Categories)) {
+            LogUtil::registerError($this->__('Passed category is invalid! (Does not exist)'));
+            return false;
+        }
+        
         //get permissionhandling var
         switch($this->getVar('permissionhandling')) {
             case '0':
@@ -145,15 +152,15 @@ class Downloads_Api_User extends Zikula_AbstractApi
                         }
                     }
                 }
-                $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
-                if($parentcategory->getCid() == 0) {
+                
+                if($category->getPid() == 0) {
                     return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
                 } else {
-                    if(SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_READ)){
+                    if(SecurityUtil::checkPermission('Downloads::Category', $category->getPid() . '::', ACCESS_READ)){
                         return true;
                     }
                 }
-                self::checkPermissions(array('category' => $parentcategory->getCid(), 'selfcall' => true));
+                self::checkPermissions(array('category' => $category->getPid(), 'selfcall' => true));
                 break;
             case '21':
                 if($args['selfcall'] != true) {
@@ -165,15 +172,15 @@ class Downloads_Api_User extends Zikula_AbstractApi
                         }
                     }
                 }
-                $parentcategory = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
-                if($parentcategory->getCid() == 0) {
+               
+                if($category->getPid() == 0) {
                     return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
                 } else {
-                    if(!SecurityUtil::checkPermission('Downloads::Category', $parentcategory->getCid() . '::', ACCESS_READ)){
+                    if(!SecurityUtil::checkPermission('Downloads::Category', $category->getPid() . '::', ACCESS_READ)){
                         return false;
                     }
                 }
-                self::checkPermissions(array('category' => $parentcategory->getCid(), 'selfcall' => true));
+                self::checkPermissions(array('category' => $category->getPid(), 'selfcall' => true));
                 break;
             case '22':
                 if($args['selfcall'] != true) {
@@ -188,7 +195,6 @@ class Downloads_Api_User extends Zikula_AbstractApi
                         }
                     }
                 }
-                $category = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
                 if($category->getPid() == 0) {
                     return SecurityUtil::checkPermission('Downloads::', '::', ACCESS_READ);
                 } else {
