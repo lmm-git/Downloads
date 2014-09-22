@@ -122,11 +122,13 @@ class Downloads_Api_User extends Zikula_AbstractApi
             LogUtil::registerError('$args[\'category\'] not set!' . $args['category']);
             return false;
         }
-        //check if $args['category'] is valid
-        $category = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
-        if(!($category instanceof Downloads_Entity_Categories)) {
-            LogUtil::registerError($this->__('Passed category is invalid! (Does not exist)'));
-            return false;
+        //check if $args['category'] is valid if $args['category] != 0 (because the main category does not exists as db-entry)
+        if($args['category'] != 0) {
+                $category = $this->entityManager->getRepository('Downloads_Entity_Categories')->find($args['category']);
+                if(!($category instanceof Downloads_Entity_Categories)) {
+                    LogUtil::registerError($this->__('Passed category is invalid! (Does not exist)'));
+                    return false;
+                }
         }
         
         //get permissionhandling var
